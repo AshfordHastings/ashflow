@@ -1,0 +1,37 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-copy-dags
+  annotations:
+    "helm.sh/hook": post-install, post-upgrade
+    "helm.sh/hook-weight": "1"
+spec:
+  template:
+    spec:
+      containers:
+      - name: copy-dags
+        image: busybox
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Listing files in /dags before copying:"
+            ls -al /dags
+            echo "Copying files from /dags to /mnt/dags..."
+            cp -RL /dags/* /opt/airflow/dags
+            echo "Listing files in /opt/airflow/dags after copying:"
+            ls -al /opt/airflow/dags
+        volumeMounts:
+        - name: dags-configmap
+          mountPath: /dags
+        - name: dags
+          mountPath: /opt/airflow/dags
+      restartPolicy: OnFailure
+      volumes:
+      - name: dags
+        persistentVolumeClaim:
+          claimName: {{ .Release.Name }}-my-dags-pvc
+      - name: dags-configmap
+        configMap:
+          name: {{ .Release.Name }}-my-dags-configmap
+        
+

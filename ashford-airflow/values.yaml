@@ -1,0 +1,88 @@
+airflow:
+  # image:
+  #   repository: apache/airflow
+  #   tag: 2.8.4-python3.9
+  executor: LocalExecutor
+  fernetKey: ''
+  users:
+    - username: admin
+      password: admin
+      role: Admin
+  # scheduler:
+  #   replicas: 1
+  web:
+    replicas: 1
+    # service:
+    #   type: ClusterIP
+    #   port: 8080
+  ingress: 
+    enabled: true 
+    web:
+      annotations: 
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/rewrite-target: /$2
+        nginx.ingress.kubernetes.io/proxy-redirect-from: /
+        nginx.ingress.kubernetes.io/proxy-redirect-to: /airflow/
+        nginx.ingress.kubernetes.io/configuration-snippet: |
+          rewrite ^(/airflow)/(.*) /$2 break;
+      hosts:
+        - "airflow.local"
+      path: /airflow(/|$)(.*)
+      pathType: ImplementationSpecific
+      ingressClassName: nginx
+  # workers:
+  #   enabled: false
+  triggerer:
+    enabled: false
+  flower:
+    enabled: false
+  dags: 
+    mountPath: /opt/airflow/dags
+    persistence:
+      enabled: true
+      existingClaim: "ashflow-my-dags-pvc"
+      accessMode: ReadOnlyMany
+    gitSync:
+      enabled: false
+  serviceAccount:
+    created: false
+  extraManifests: []
+  pgBouncer:
+    enabled: false
+  postgresql:
+    enabled: true
+    # persistence:
+    #   enabled: true
+    #   storageClass: ''
+    #   size: 8Gi
+  # externalDatabase:
+  #   type: postgres
+
+  #   # host: postgresql+psycopg2://airflow:airflow@postgres/airflow
+  #   host: host.docker.internal  # Special DNS name to access host from Docker containers
+  #   port: 5432
+  #   user: airflow
+  #   password: airflow
+  #   properties: ""
+  redis:
+    enabled: false
+  externalRedis:
+    enabled: false
+  extraEnv: |-
+    - name: AIRFLOW__CORE__LOAD_EXAMPLES
+      value: "False"
+    - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION 
+      value: "True"
+    - name: AIRFLOW__WEBSERVER__WEB_SERVER_URL_PREFIX
+      value: /airflow
+    - name: AIRFLOW__WEBSERVER__BASE_URL
+      value: http://airflow.local/airflow
+    - name: AIRFLOW__WEBSERVER__WEB_SERVER_BASE_URL
+      value: http://airflow.local/airflow
+    
+      
+
+
+
+    
+

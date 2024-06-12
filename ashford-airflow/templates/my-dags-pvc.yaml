@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+    name: {{ .Release.Name }}-my-dags-pvc
+spec:
+    storageClassName: standard
+    accessModes:
+        - {{ .Values.airflow.dags.persistence.accessMode }}
+    resources:
+        requests:
+            storage: 4Gi
+    # hostPath:
+    #     path: {{ .Values.airflow.dags.mountPath }}
