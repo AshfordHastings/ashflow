@@ -1,0 +1,8 @@
+airflowPvc: ashflow-my-dags-pvc
+acr:
+  name: airflowacr695
+  secretName: acr-secret
+image:
+  repository: cool-dags
+  tag: "0.0.1"
+  pullPolicy: Always

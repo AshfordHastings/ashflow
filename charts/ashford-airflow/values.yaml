@@ -19,17 +19,25 @@ airflow:
     enabled: true 
     web:
       annotations: 
-        nginx.ingress.kubernetes.io/use-regex: "true"
-        nginx.ingress.kubernetes.io/rewrite-target: /$2
-        nginx.ingress.kubernetes.io/proxy-redirect-from: /
-        nginx.ingress.kubernetes.io/proxy-redirect-to: /airflow/
-        nginx.ingress.kubernetes.io/configuration-snippet: |
-          rewrite ^(/airflow)/(.*) /$2 break;
+        nginx.ingress.kubernetes.io/rewrite-target: /
       hosts:
         - "airflow.local"
-      path: /airflow(/|$)(.*)
+      path: /
       pathType: ImplementationSpecific
       ingressClassName: nginx
+    # web:
+    #   annotations: 
+    #     nginx.ingress.kubernetes.io/use-regex: "true"
+    #     nginx.ingress.kubernetes.io/rewrite-target: /
+    #     nginx.ingress.kubernetes.io/proxy-redirect-from: /
+    #     nginx.ingress.kubernetes.io/proxy-redirect-to: /airflow/
+    #     nginx.ingress.kubernetes.io/configuration-snippet: |
+    #       rewrite ^(/airflow)/(.*) /$2 break;
+    #   hosts:
+    #     - "airflow.local"
+    #   path: /airflow(/|$)(.*)
+    #   pathType: ImplementationSpecific
+    #   ingressClassName: nginx
   # workers:
   #   enabled: false
   triggerer:
@@ -74,11 +82,22 @@ airflow:
     - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION 
       value: "True"
     - name: AIRFLOW__WEBSERVER__WEB_SERVER_URL_PREFIX
-      value: /airflow
+      value: /
     - name: AIRFLOW__WEBSERVER__BASE_URL
-      value: http://airflow.local/airflow
+      value: http://airflow.local
     - name: AIRFLOW__WEBSERVER__WEB_SERVER_BASE_URL
-      value: http://airflow.local/airflow
+      value: http://airflow.local
+  # extraEnv: |-
+  #   - name: AIRFLOW__CORE__LOAD_EXAMPLES
+  #     value: "False"
+  #   - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION 
+  #     value: "True"
+  #   - name: AIRFLOW__WEBSERVER__WEB_SERVER_URL_PREFIX
+  #     value: /airflow
+  #   - name: AIRFLOW__WEBSERVER__BASE_URL
+  #     value: http://airflow.local/airflow
+  #   - name: AIRFLOW__WEBSERVER__WEB_SERVER_BASE_URL
+  #     value: http://airflow.local/airflow
     
       
 

@@ -29,7 +29,7 @@ spec:
       volumes:
       - name: dags
         persistentVolumeClaim:
-          claimName: {{ .Release.Name }}-my-dags-pvc
+          claimName: {{ .Values.airflowPvc }}
       - name: dags-configmap
         configMap:
           name: {{ .Release.Name }}-my-dags-configmap
