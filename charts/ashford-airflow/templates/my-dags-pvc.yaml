@@ -1,3 +1,4 @@
+{{- if and .Values.airflow.dags.persistence.enabled .Values.airflow.dags.persistence.existingClaim }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
@@ -11,3 +12,4 @@ spec:
             storage: 4Gi
     # hostPath:
     #     path: {{ .Values.airflow.dags.mountPath }}
+{{- end }}

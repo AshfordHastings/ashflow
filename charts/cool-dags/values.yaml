@@ -1,4 +1,4 @@
-airflowPvc: ashflow-my-dags-pvc
+airflowPvc: ashflow-dags
 acr:
   name: airflowacr695
   secretName: acr-secret

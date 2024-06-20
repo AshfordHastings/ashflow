@@ -10,6 +10,13 @@ airflow:
       role: Admin
   # scheduler:
   #   replicas: 1
+  images:
+    airflow:
+      pullPolicy: IfNotPresent
+      repository: airflowacr695.azurecr.io/ashflow/ashflow
+      tag: 0.0.1
+  registry:
+    secretName: acr-secret
   web:
     replicas: 1
     # service:
@@ -48,7 +55,9 @@ airflow:
     mountPath: /opt/airflow/dags
     persistence:
       enabled: true
-      existingClaim: "ashflow-my-dags-pvc"
+      # existingClaim: "ashflow-my-dags-pvc"
+      size: 4Gi
+      storageClassName: standard
       accessMode: ReadOnlyMany
     gitSync:
       enabled: false

@@ -1,0 +1,49 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-add-connections
+  annotations:
+    "helm.sh/hook": "post-install, post-upgrade"
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": "hook-succeeded" # Job deletes on success
+spec:
+  template:
+    spec:
+      containers:
+        - name: add-connections
+          image: {{ .Values.acr.name }}.azurecr.io/{{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -e # Exit if failure
+
+              CONNECTION_ID='wiki_db'
+              CONNECTION_JSON='{
+                "conn_type": "postgres",
+                "login": "postgres",
+                "password": "password",
+                "host": "192.168.1.214",
+                "port": 5434,
+                "schema": "wiki"
+              }'
+              if airflow connections get $CONNECTION_ID; then
+                airflow connections delete $CONNECTION_ID
+              fi
+              airflow connections add 'wiki_db' \
+                --conn-json "$CONNECTION_JSON"
+          volumeMounts:
+          - mountPath: /opt/airflow/airflow.cfg
+            name: config
+            readOnly: true
+            subPath: airflow.cfg
+          env:
+          {{- include "standard_airflow_environment" . | indent 10 }}
+      restartPolicy: Never
+      volumes:
+        - name: config
+          configMap:
+            name: {{ .Values.airflow.config.name }}
+      imagePullSecrets:
+      - name: {{ .Values.acr.secretName }}
+        

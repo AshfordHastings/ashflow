@@ -1,0 +1,15 @@
+acr:
+  name: airflowacr695
+  secretName: acr-secret
+image:
+  repository: wiki-dags/wiki-dags
+  tag: "0.0.2"
+  pullPolicy: Always
+airflow:
+  image:
+    repository: ashflow/ashflow
+    tag: "0.0.1"
+    pullPolicy: Always
+  pvc: ashflow-dags
+  config:
+    name: ashflow-config

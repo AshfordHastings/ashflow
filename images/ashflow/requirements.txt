@@ -1,0 +1,2 @@
+urllib3
+apache-airflow-providers-postgres==5.11.1

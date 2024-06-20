@@ -1,0 +1,19 @@
+version: '3'
+services:
+  wiki_db: 
+    image: 'postgres'
+    container_name: wiki_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: wiki
+    volumes:
+      #- pgdata:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - 5434:5432
+    networks:
+      - wiki_network
+networks:
+  wiki_network:
+    driver: bridge
