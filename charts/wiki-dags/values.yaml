@@ -3,7 +3,7 @@ acr:
   secretName: acr-secret
 image:
   repository: wiki-dags/wiki-dags
-  tag: "0.0.2"
+  tag: "0.0.3"
   pullPolicy: Always
 airflow:
   image:

@@ -2,7 +2,8 @@ from airflow.utils.dates import days_ago
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from airflow.providers.postgres.operators.postgres import SQLExecuteQueryOperator
+# from airflow.providers.postgres.operators.postgres import SQLExecuteQueryOperator
+from airflow.providers.postgres.hooks.postgres import PostgresHook
 # from airflow.providers.http.sensors.http import HttpSensor
 from airflow.sensors.python import PythonSensor
 from pendulum import datetime
@@ -14,11 +15,11 @@ import logging
 
 dag = DAG(
     dag_id='read_wiki_py',
-    start_date=days_ago(1),
-    schedule_interval='@hourly',
-    max_active_runs=12,
+    start_date=datetime(2024, 6, 18),
+    schedule_interval=timedelta(minutes=60),
+    max_active_runs=10,
     template_searchpath="/tmp" # Default WORKDIR of where Operators search for files
-)
+) # This will execute the DAG from 12:00 3 days before current date, on hourly intervals, 
 
 def _check_data_avaliability(year, month, day, hour):
     url = (
@@ -38,10 +39,10 @@ check_data = PythonSensor(
     task_id="wait_for_data",
     python_callable=_check_data_avaliability,
     op_kwargs={
-        "year": "{{ execution_date.year }}",
-        "month": "{{ '{:02}'.format(execution_date.month) }}",
-        "day": "{{ '{:02}'.format(execution_date.day) }}",
-        "hour": "{{ '{:02}'.format(execution_date.hour) }}",
+        "year": "{{ data_interval_start.year }}",
+        "month": "{{ '{:02}'.format(data_interval_start.month) }}",
+        "day": "{{ '{:02}'.format(data_interval_start.day) }}",
+        "hour": "{{ '{:02}'.format(data_interval_start.hour) }}",
     },
     poke_interval=timedelta(minutes=30),
     timeout=timedelta(hours=3),
@@ -69,10 +70,10 @@ get_data = PythonOperator(
     task_id="get_data",
     python_callable=_get_data,
     op_kwargs={
-        "year": "{{ execution_date.year }}",
-        "month": "{{ '{:02}'.format(execution_date.month) }}",
-        "day": "{{ '{:02}'.format(execution_date.day) }}",
-        "hour": "{{ '{:02}'.format(execution_date.hour) }}",
+        "year": "{{ data_interval_start.year }}",
+        "month": "{{ '{:02}'.format(data_interval_start.month) }}",
+        "day": "{{ '{:02}'.format(data_interval_start.day) }}",
+        "hour": "{{ '{:02}'.format(data_interval_start.hour) }}",
     },
     dag=dag,
 )
@@ -85,7 +86,7 @@ extract_data = BashOperator(
     dag=dag,
 )
 
-def _fetch_pageviews(pagenames, execution_date, ti):
+def _fetch_pageviews(pagenames, ti):
     output_path = ti.xcom_pull(task_ids='get_data', key='output_path')
     page_views = {pagename: 0 for pagename in pagenames}
     with open(output_path.replace('.gz', ''), 'r') as f:
@@ -95,16 +96,7 @@ def _fetch_pageviews(pagenames, execution_date, ti):
                 page_views[page_title] = view_counts
     logging.info(f"PAGE VIEWS: {json.dumps(page_views, indent=2)}")
 
-    query_file = f"postgres_query{output_path.split('_')[1].replace('.gz', '.sql')}"
-    with open(f"/tmp/{query_file}", "w") as f:
-        for page_name, view_count in page_views.items():
-            f.write(
-                "INSERT INTO pageview_counts VALUES ("
-                f"'{page_name}', '{view_count}', '{execution_date}'"
-                ");\n"
-            )
-    logging.info(f"Writing SQL script to ${query_file}.")
-    ti.xcom_push(key='query_file', value=query_file)
+    ti.xcom_push(key='page_views', value=page_views) # page_views is pickleable
 
 
 fetch_pageviews = PythonOperator(
@@ -116,11 +108,32 @@ fetch_pageviews = PythonOperator(
     dag=dag
 )
 
-write_to_postgres = SQLExecuteQueryOperator(
+def _write_to_postgres(data_interval_start, ti):
+    page_views = ti.xcom_pull(task_ids='fetch_pageviews', key='page_views')
+
+    postgres_hook = PostgresHook(postgres_conn_id="wiki_db")
+
+    for page_name, view_count in page_views.items():
+        postgres_hook.run(
+            "INSERT INTO pageview_counts VALUES (%s, %s, %s)",
+            parameters=(page_name, view_count, data_interval_start)
+        )
+
+
+write_to_postgres = PythonOperator(
     task_id="write_to_postgres",
-    sql="/tmp/{{ ti.xcom_pull(task_ids='fetch_pageviews', key='query_file') }}", # This itself is a template - so it is going to assume it is just sql
-    conn_id="wiki_db"
+    python_callable=_write_to_postgres,
+    op_kwargs={
+        # 'page_views': "{{ ti.xcom_pull(task_ids='fetch_pageviews', key='page_views') }}",
+        # 'execution_date': "{{ execution_date }}"
+    }
 )
+
+# write_to_postgres = SQLExecuteQueryOperator( # can use "parameters" to fill the template, but parameters itself cannot be templated, I think
+#     task_id="write_to_postgres",
+#     sql="/tmp/{{ ti.xcom_pull(task_ids='fetch_pageviews', key='query_file') }}", # This itself is a template - so it is going to assume it is just sql
+#     conn_id="wiki_db"
+# )
 
 check_data >> get_data >> extract_data >> fetch_pageviews >> write_to_postgres
 
