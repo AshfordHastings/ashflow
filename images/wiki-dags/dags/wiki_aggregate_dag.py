@@ -8,7 +8,6 @@ from airflow.operators.python import PythonOperator
 from airflow.providers.postgres.hooks.postgres import PostgresHook
 import pandas as pd
 
-
 dag = DAG(
     dag_id='aggregate_wiki',
     start_date=datetime(2024, 6, 18),

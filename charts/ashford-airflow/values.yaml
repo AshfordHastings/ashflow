@@ -2,8 +2,8 @@ airflow:
   # image:
   #   repository: apache/airflow
   #   tag: 2.8.4-python3.9
-  executor: LocalExecutor
-  fernetKey: ''
+  executor: KubernetesExecutor
+  # fernetKeySecretName: 'ashflow-fernet-key'
   users:
     - username: admin
       password: admin
@@ -14,7 +14,11 @@ airflow:
     airflow:
       pullPolicy: IfNotPresent
       repository: airflowacr695.azurecr.io/ashflow/ashflow
-      tag: 0.0.1
+      tag: 0.0.2
+    pod_template:
+      pullPolicy: IfNotPresent
+      repository: airflowacr695.azurecr.io/ashflow/ashflow
+      tag: 0.0.2
   registry:
     secretName: acr-secret
   web:

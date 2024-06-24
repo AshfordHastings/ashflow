@@ -12,13 +12,37 @@ from urllib import request
 import json
 import logging
 
+from kubernetes.client import models as k8s
+
+executor_config_template = {
+    "pod_override": k8s.V1Pod(
+        spec=k8s.V1PodSpec(
+            containers=[
+                k8s.V1Container(
+                    name="base",
+                    volume_mounts=[
+                        k8s.V1VolumeMount(
+                            mount_path="/mnt/wiki/",
+                            name="wiki-volume")
+                    ],
+                )
+            ],
+            volumes=[
+                k8s.V1Volume(
+                    name="wiki-volume",
+                    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="wiki-dags-com-vol")
+                )
+            ],
+        )
+    ),
+}
 
 dag = DAG(
     dag_id='read_wiki_py',
     start_date=datetime(2024, 6, 18),
     schedule_interval=timedelta(minutes=60),
     max_active_runs=5,
-    template_searchpath="/tmp", # Default WORKDIR of where Operators search for files
+    template_searchpath="/mnt/wiki", # Default WORKDIR of where Operators search for files
     default_args={
         "retries": 4,
         "retry_delay": timedelta(seconds=15),
@@ -26,6 +50,8 @@ dag = DAG(
         "max_retry_delay": timedelta(minutes=1),
     },
 ) # This will execute the DAG from 12:00 3 days before current date, on hourly intervals, 
+
+
 
 def _check_data_avaliability(year, month, day, hour):
     url = (
@@ -64,7 +90,7 @@ def _get_data(year, month, day, hour, ti ):
         f"{year}/{year}-{month}/pageviews-{year}{month}{day}-{hour}0000.gz"
     )
 
-    output_path = f"/tmp/wikipageviews_{year}{month}{day}-{hour}.gz"
+    output_path = f"/mnt/wiki/wikipageviews_{year}{month}{day}-{hour}.gz"
     logging.info(f"Making request to ${url} and writing to ${output_path}.")
 
     request.urlretrieve(url, output_path)
@@ -81,6 +107,8 @@ get_data = PythonOperator(
         "day": "{{ '{:02}'.format(data_interval_start.day) }}",
         "hour": "{{ '{:02}'.format(data_interval_start.hour) }}",
     },
+    # executor_config={"KubernetesExecutor": executor_config_template}, # I don't think this one needs the objects and stuff? 
+    executor_config=executor_config_template,
     dag=dag,
 )
 
@@ -90,6 +118,7 @@ extract_data = BashOperator(
         "gunzip --force {{ ti.xcom_pull(task_ids='get_data', key='output_path') }}"
     ),
     dag=dag,
+    executor_config=executor_config_template
 )
 
 def _fetch_pageviews(pagenames, ti):
@@ -111,6 +140,7 @@ fetch_pageviews = PythonOperator(
     op_kwargs={
         "pagenames": ["Facebook", "Amazon", "Apple", "Netflix", "Google"]
     },
+    executor_config=executor_config_template,
     dag=dag
 )
 
@@ -133,6 +163,7 @@ write_to_postgres = PythonOperator(
         # 'page_views': "{{ ti.xcom_pull(task_ids='fetch_pageviews', key='page_views') }}",
         # 'execution_date': "{{ execution_date }}"
     },
+    executor_config=executor_config_template,
     dag=dag
 )
 
