@@ -17,8 +17,14 @@ dag = DAG(
     dag_id='read_wiki_py',
     start_date=datetime(2024, 6, 18),
     schedule_interval=timedelta(minutes=60),
-    max_active_runs=10,
-    template_searchpath="/tmp" # Default WORKDIR of where Operators search for files
+    max_active_runs=5,
+    template_searchpath="/tmp", # Default WORKDIR of where Operators search for files
+    default_args={
+        "retries": 4,
+        "retry_delay": timedelta(seconds=15),
+        "retry_exponential_backoff": False,
+        "max_retry_delay": timedelta(minutes=1),
+    },
 ) # This will execute the DAG from 12:00 3 days before current date, on hourly intervals, 
 
 def _check_data_avaliability(year, month, day, hour):
@@ -29,10 +35,10 @@ def _check_data_avaliability(year, month, day, hour):
     logging.info(f"Making request to ${url}.")
     try:
         request.urlopen(url)
-        logging.info("Data is avaliable. Proceeding.")
+        logging.info(f"Data is avaliable at {url}. Proceeding.")
         return True
     except:
-        logging.info("Data is unavaliable. Rescheduling.")
+        logging.info(f"Data is unavaliable at {url}. Rescheduling.")
         return False
     
 check_data = PythonSensor(
@@ -126,7 +132,8 @@ write_to_postgres = PythonOperator(
     op_kwargs={
         # 'page_views': "{{ ti.xcom_pull(task_ids='fetch_pageviews', key='page_views') }}",
         # 'execution_date': "{{ execution_date }}"
-    }
+    },
+    dag=dag
 )
 
 # write_to_postgres = SQLExecuteQueryOperator( # can use "parameters" to fill the template, but parameters itself cannot be templated, I think
