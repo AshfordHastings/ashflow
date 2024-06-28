@@ -11,12 +11,11 @@ spec:
     spec:
       containers:
       - name: copy-dags
-        image: {{ .Values.acr.name }}.azurecr.io/{{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.registryName }}.azurecr.io/{{ .Values.image.name }}:{{ .Values.image.tag }}
         imagePullPolicy: {{ .Values.image.pullPolicy}}
         command: ["/bin/sh", "-c"]
         args:
           - |
-            PROJECT_NAME=$(cat /config.yaml | grep project_name | awk '{print $2}')
             echo "Project name: $PROJECT_NAME"
             DEST_DIR="/opt/airflow/dags/$PROJECT_NAME"
             if [ ! -d "$DEST_DIR" ]; then
@@ -31,6 +30,9 @@ spec:
             cp -RL /dags/* "$DEST_DIR/"
             echo "Listing files in /opt/airflow/dags/$PROJECT_NAME after copying:"
             ls -al "$DEST_DIR"
+        env:
+        - name: PROJECT_NAME
+          value: {{ .Values.projectName}}
         volumeMounts:
         - name: dags
           mountPath: /opt/airflow/dags
@@ -40,6 +42,6 @@ spec:
         persistentVolumeClaim:
           claimName: {{ .Values.airflow.pvc }}
       imagePullSecrets:
-      - name: {{ .Values.acr.secretName }}
+      - name: {{ .Values.image.registrySecretName }}
         
 

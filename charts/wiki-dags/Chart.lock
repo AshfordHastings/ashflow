@@ -1,0 +1,6 @@
+dependencies:
+- name: ashflow-app-base
+  repository: file://../ashflow-app-base
+  version: 0.1.0
+digest: sha256:f34b5b397a46eff00db5cff428d11048bf69fc716b3f2afda6357c042bd4df85
+generated: "2024-06-28T12:10:43.039073-05:00"

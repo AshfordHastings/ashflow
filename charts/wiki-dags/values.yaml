@@ -1,15 +1,11 @@
-acr:
-  name: airflowacr695
-  secretName: acr-secret
-image:
-  repository: wiki-dags/wiki-dags
-  tag: "0.0.5"
-  pullPolicy: Always
-airflow:
+ashflow-app-base:
+  projectName: "wiki-dags"
   image:
-    repository: ashflow/ashflow
-    tag: "0.0.2"
+    registryName: airflowacr695
+    registrySecretName: acr-secret
+    name: wiki-dags/wiki-dags
+    tag: "0.0.5"
     pullPolicy: Always
-  pvc: ashflow-dags
-  config:
-    name: ashflow-config
+  configurations:
+    removeDagsOnUninstall: true
+    removeDagRunsOnUninstall: false

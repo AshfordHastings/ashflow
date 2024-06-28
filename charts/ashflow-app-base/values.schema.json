@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Schema for Base DAG Deployment Chart.",
+  "description": "Values for Base Deployment.",
+  "type": "object",
+  "properties": {
+    "projectName": {
+      "type": "string",
+      "description": "Name of the project."
+    },
+    "image": {
+      "type": "object",
+      "properties": {
+        "registryName": {
+          "type": "string",
+          "description": "Registry for image."
+        },
+        "registrySecretName": {
+          "type": "string",
+          "description": "Secret name for registry."
+        },
+        "tag": {
+          "type": "string",
+          "description": "Tag for image."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name for image."
+        },
+        "pullPolicy": {
+          "type": "string",
+          "description": "Pull policy for image."
+        }
+      },
+      "required": ["registryName", "registrySecretName", "tag", "name"]
+    },
+    "airflow": {
+      "type": "object",
+      "properties": {
+        "image": {
+          "type": "object",
+          "properties": {
+            "registryName": {
+              "type": "string",
+              "description": "Registry for image."
+            },
+            "registrySecretName": {
+              "type": "string",
+              "description": "Secret name for registry."
+            },
+            "tag": {
+              "type": "string",
+              "description": "Tag for image."
+            },
+            "name": {
+              "type": "string",
+              "description": "Name for image."
+            },
+            "pullPolicy": {
+              "type": "string",
+              "description": "Pull policy for image."
+            }
+          },
+          "required": ["registryName", "registrySecretName", "tag", "name"]
+        },
+        "pvc": {
+          "type": "string",
+          "description": "Persistent volume claim."
+        },
+        "config": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "Name for config."
+            }
+          },
+          "required": ["name"]
+        }
+      }
+    },
+    "configurations": {
+      "type": "object",
+      "properties": {
+        "removeDagsOnUninstall": {
+          "type": "boolean",
+          "description": "Remove dags on uninstall."
+        }
+      }
+    }
+  },
+  "required": ["projectName", "image"]
+}

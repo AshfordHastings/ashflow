@@ -1,0 +1,16 @@
+projectName: ""
+image:
+  pullPolicy: Always
+airflow:
+  image:
+    registryName: airflowacr695
+    registrySecretName: acr-secret
+    name: ashflow/ashflow
+    tag: "0.0.2"
+    pullPolicy: Always
+  pvc: ashflow-dags
+  config:
+    name: ashflow-config
+configurations:
+  removeDagsOnUninstall: true
+  removeDagRunsOnUninstall: false

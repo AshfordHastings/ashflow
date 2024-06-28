@@ -11,6 +11,7 @@ from datetime import timedelta
 from urllib import request
 import json
 import logging
+import os
 
 from kubernetes.client import models as k8s
 
@@ -41,7 +42,7 @@ dag = DAG(
     dag_id='read_wiki_py',
     start_date=datetime(2024, 6, 18),
     schedule_interval=timedelta(minutes=60),
-    max_active_runs=5,
+    max_active_runs=10,
     template_searchpath="/mnt/wiki", # Default WORKDIR of where Operators search for files
     default_args={
         "retries": 4,
@@ -49,6 +50,7 @@ dag = DAG(
         "retry_exponential_backoff": False,
         "max_retry_delay": timedelta(minutes=1),
     },
+    tags=["wiki-dags"]
 ) # This will execute the DAG from 12:00 3 days before current date, on hourly intervals, 
 
 
@@ -123,13 +125,18 @@ extract_data = BashOperator(
 
 def _fetch_pageviews(pagenames, ti):
     output_path = ti.xcom_pull(task_ids='get_data', key='output_path')
+    true_path = output_path.replace('.gz', '')
     page_views = {pagename: 0 for pagename in pagenames}
-    with open(output_path.replace('.gz', ''), 'r') as f:
+    with open(true_path, 'r') as f:
         for line in f:
             domain_code, page_title, view_counts, _ = line.split(" ")
             if domain_code == "en" and page_title in pagenames:
                 page_views[page_title] = view_counts
     logging.info(f"PAGE VIEWS: {json.dumps(page_views, indent=2)}")
+
+    if os.path.exists(true_path):
+        os.remove(true_path)
+        logging.info(f"Removed path {true_path}.")
 
     ti.xcom_push(key='page_views', value=page_views) # page_views is pickleable
 

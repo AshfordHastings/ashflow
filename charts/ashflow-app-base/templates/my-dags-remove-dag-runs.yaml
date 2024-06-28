@@ -1,0 +1,52 @@
+{{- if .Values.configurations.removeDagRunsOnUninstall }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-remove-dag-runs
+  annotations:
+    "helm.sh/hook": "post-delete"
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": "hook-succeeded" # Job deletes on success
+spec:
+  template:
+    spec:
+      containers:
+      - name: remove-dag-runs
+        image: {{ .Values.airflow.image.registryName }}.azurecr.io/{{ .Values.airflow.image.name }}:{{ .Values.airflow.image.tag }}
+        imagePullPolicy: {{ .Values.airflow.image.pullPolicy}}
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            # Define the directory containing the DAGs
+            DAGS_DIR="$AIRFLOW_HOME/dags/$PROJECT_NAME"
+
+            echo "Listing DAGs in $DAGS_DIR before deleting data:"
+
+            # List all DAGs in the specified directory and output in JSON format
+            dag_list_json=$(airflow dags list -S "$DAGS_DIR" -o json)
+
+
+            # Use Python to parse the JSON and extract dag_id, then loop through each dag_id
+            echo "$dag_list_json" | python3 -c "import sys, json; [print(dag['dag_id']) for dag in json.load(sys.stdin)]" | while read -r dag_id; do
+                # Delete the DAG by its ID
+                echo "Deleting DAG: $dag_id"
+                airflow dags delete -y "$dag_id"
+            done
+        env:
+        - name: PROJECT_NAME
+          value: {{ .Values.projectName}}
+        - mountPath: /opt/airflow/airflow.cfg
+          name: config
+          readOnly: true
+          subPath: airflow.cfg
+        env:
+        {{- include "standard_airflow_environment" . | indent 10 }}
+      restartPolicy: Never
+      volumes:
+      - name: config
+        configMap:
+          name: {{ .Values.airflow.config.name }}
+      imagePullSecrets:
+      - name: {{ .Values.airflow.image.registrySecretName }}
+{{- end }}
+        

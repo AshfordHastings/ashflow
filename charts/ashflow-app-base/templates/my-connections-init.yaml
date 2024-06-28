@@ -11,8 +11,8 @@ spec:
     spec:
       containers:
         - name: add-connections
-          image: {{ .Values.acr.name }}.azurecr.io/{{ .Values.airflow.image.repository }}:{{ .Values.airflow.image.tag }}
-          imagePullPolicy: {{ .Values.image.pullPolicy}}
+          image: {{ .Values.airflow.image.registryName }}.azurecr.io/{{ .Values.airflow.image.name }}:{{ .Values.airflow.image.tag }}
+          imagePullPolicy: {{ .Values.airflow.image.pullPolicy}}
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -45,5 +45,5 @@ spec:
           configMap:
             name: {{ .Values.airflow.config.name }}
       imagePullSecrets:
-      - name: {{ .Values.acr.secretName }}
+      - name: {{ .Values.airflow.image.registrySecretName }}
         

@@ -13,6 +13,7 @@ dag = DAG(
     start_date=datetime(2024, 6, 18),
     schedule_interval=timedelta(days=1),
     max_active_runs=1,
+    tags=["wiki-dags"]
 )
 
 wait_for_hourly_wiki_read_completion = ExternalTaskSensor(
@@ -68,7 +69,7 @@ def _fetch_and_aggregate_page_views(data_interval_start, data_interval_end):
 fetch_and_aggregate_page_views = PythonOperator(
     task_id="fetch_and_aggregate_page_views",
     python_callable=_fetch_and_aggregate_page_views,
-    dag=dag
+    dag=dag,
 )
 
 wait_for_hourly_wiki_read_completion >> fetch_and_aggregate_page_views

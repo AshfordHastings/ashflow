@@ -1,0 +1,44 @@
+{{- if .Values.configurations.removeDagsOnUninstall }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Release.Name }}-remove-dags
+  annotations:
+    "helm.sh/hook": "post-delete"
+    "helm.sh/hook-weight": "2"
+    "helm.sh/hook-delete-policy": "hook-succeeded" # Job deletes on success
+spec:
+  template:
+    spec:
+      containers:
+      - name: remove-dags
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            echo "Project name: $PROJECT_NAME"
+            DEST_DIR="/opt/airflow/dags/$PROJECT_NAME"
+            if [ ! -d "$DEST_DIR" ]; then
+                echo "$DEST_DIR does not exist. Exiting post-install job without error."
+                exit 0
+            fi
+
+            echo "Listing dags in current PVC directory before deleting:"
+            ls -al "$DEST_DIR"
+            echo "Removing DAGs for uninstall..."
+            rm -rf $DEST_DIR/*
+            echo "DAGs removed."
+        env:
+        - name: PROJECT_NAME
+          value: {{ .Values.projectName}}
+        volumeMounts:
+        - name: dags
+          mountPath: /opt/airflow/dags
+      restartPolicy: Never
+      volumes:
+      - name: dags
+        persistentVolumeClaim:
+          claimName: {{ .Values.airflow.pvc }}
+{{- end }}
+        
