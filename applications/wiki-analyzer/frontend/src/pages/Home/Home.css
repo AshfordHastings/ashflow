@@ -1,0 +1,11 @@
+.page {
+    margin: 5em 5em;
+    border: 0.2em solid black;
+
+}
+
+.page h2 {
+    font-size: 3em;
+    text-align: center;
+}
+

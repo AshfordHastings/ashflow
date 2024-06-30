@@ -1,0 +1,26 @@
+.wiki-pages {
+    display: flex;
+    flex-direction: column;
+    border: solid 2px black;
+    font-size: 2em;
+}
+
+.wiki-page {
+    padding: 10px 5px;
+    border: solid 2px red;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: solid 2px #ddd;
+
+}
+
+.wiki-page > .icons {
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.icons > * {
+    margin: .2em;
+}
