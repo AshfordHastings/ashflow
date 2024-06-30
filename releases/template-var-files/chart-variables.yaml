@@ -1,0 +1,8 @@
+variables: 
+  - name: REPOSITORY
+  - name: TAG 
+  - name: KUBERNETES_NAMESPACE 
+  - name: RELEASE_NAME
+  - name: REGISTRY_NAME
+  - name: CHART_PATH
+  - name: CHART_NAME

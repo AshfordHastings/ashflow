@@ -1,0 +1,5 @@
+repository: "oci://airflowacr695.azurecr.io/helm"
+tag: "0.1.0"
+namespace: "default"
+releaseName: "wiki-dags"
+chartName: "ashflow-app-base"

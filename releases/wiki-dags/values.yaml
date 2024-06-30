@@ -1,0 +1,10 @@
+projectName: "wiki-dags"
+image:
+  registryName: airflowacr695
+  registrySecretName: acr-secret
+  name: wiki-dags/wiki-dags
+  tag: "0.0.5"
+  pullPolicy: Always
+configurations:
+  removeDagsOnUninstall: true
+  removeDagRunsOnUninstall: false
