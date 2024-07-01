@@ -12,6 +12,19 @@ output "acr_password" {
     sensitive = true
 }
 
+output "tenant_id" {
+    value = azuread_service_principal.airflow-spn.application_tenant_id
+}
+
+output "client_id" {
+    value = azuread_service_principal.airflow-spn.object_id
+}
+
+output "client_secret" {
+    value = azuread_service_principal_password.airflow-spn-ps.value
+    sensitive = true
+}
+
 output "resource_group" {
   value = azurerm_resource_group.rg.name
 }

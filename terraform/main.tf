@@ -13,15 +13,14 @@ resource "azurerm_container_registry" "acr" {
     admin_enabled = true
 }
 
-resource "azurerm_key_vault" "key-vault" {
-  name                        = "airflowkeyvault"
+resource "azurerm_key_vault" "keyvault" {
+  name                        = "airflowkeyvault1"
   location                    = azurerm_resource_group.rg.location
   resource_group_name         = azurerm_resource_group.rg.name
   tenant_id                   = data.azurerm_client_config.my-client.tenant_id
   sku_name                    = "standard"
   
-  soft_delete_enabled         = true
-  purge_protection_enabled    = true
+  purge_protection_enabled    = false
 
   network_acls {
     default_action = "Allow"
@@ -34,21 +33,22 @@ resource "azuread_application" "airflow-app" {
 }
 
 resource "azuread_service_principal" "airflow-spn" {
-    service_principal_id = azuread_application.airflow-app.id
-}
-
-resource "random_password" "pass" {
-    length = 16
-    special = true
+    client_id = azuread_application.airflow-app.application_id
 }
 
 resource "azuread_service_principal_password" "airflow-spn-ps" {
     service_principal_id = azuread_service_principal.airflow-spn.id
-    value = random_password.pass.result
     end_date = "2099-01-01T00:00:00Z"
 }
 
+resource "azurerm_role_assignment" "spn_user_access" {
+    scope = azurerm_key_vault.keyvault.id
+    principal_id = data.azurerm_client_config.my-client.object_id
+    role_definition_name = "Key Vault Secrets User"
+}
+
 resource "azurerm_role_assignment" "spn_key_vault_access" {
+    scope = azurerm_key_vault.keyvault.id
     principal_id = azuread_service_principal.airflow-spn.object_id
     role_definition_name = "Key Vault Secrets User"
 }
@@ -61,13 +61,13 @@ resource "azurerm_key_vault_access_policy" "client_access" {
   object_id    = data.azurerm_client_config.my-client.object_id
 
   secret_permissions = [
-    "get",
-    "list",
-    "set",
-    "delete",
-    "recover",
-    "backup",
-    "restore",
+    "Get",
+    "List",
+    "Set",
+    "Delete",
+    "Recover",
+    "Backup",
+    "Restore",
   ]
 }
 
@@ -79,12 +79,12 @@ resource "azurerm_key_vault_access_policy" "spn_access" {
   object_id    = azuread_service_principal.airflow-spn.object_id
 
   secret_permissions = [
-    "get",
-    "list",
-    "set",
-    "delete",
-    "recover",
-    "backup",
-    "restore",
+    "Get",
+    "List",
+    "Set",
+    "Delete",
+    "Recover",
+    "Backup",
+    "Restore",
   ]
 }

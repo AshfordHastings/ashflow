@@ -59,7 +59,6 @@ airflow:
     mountPath: /opt/airflow/dags
     persistence:
       enabled: true
-      # existingClaim: "ashflow-my-dags-pvc"
       size: 4Gi
       storageClassName: standard
       accessMode: ReadOnlyMany
@@ -89,6 +88,9 @@ airflow:
     enabled: false
   externalRedis:
     enabled: false
+  extraEnvFrom: |-
+    - secretRef:
+        name: airflow-spn-credentials
   extraEnv: |-
     - name: AIRFLOW__CORE__LOAD_EXAMPLES
       value: "False"
@@ -100,6 +102,28 @@ airflow:
       value: http://airflow.local
     - name: AIRFLOW__WEBSERVER__WEB_SERVER_BASE_URL
       value: http://airflow.local
+    # Limit the number of active DAG runs per DAG
+    - name: AIRFLOW__CORE__MAX_ACTIVE_RUNS_PER_DAG 
+      value: "30"
+    # Max Active tasks per DAG (for ALL DAG runs combined)
+    - name: AIRFLOW__CORE__MAX_ACTIVE_TASKS_PER_DAG 
+      value: "30"
+    # Max number of consecutive dag runs before dag is automatically paused 
+    - name: AIRFLOW__CORE__MAX_CONSECUTIVE_FAILED_DAG_RUNS_PER_DAG
+      value: "10"
+    # The interval at which the scheduler should try to process a file (not new files, just updated files)
+    - name: AIRFLOW__SCHEDULER__MIN_FILE_PROCESS_INTERVAL
+      value: "30"
+    # The interval that the scheduler looks for NEW dags in seconds - safe to set to 30 seconds for less than 200 DAGs
+    - name: AIRFLOW__SCHEDULER__DAG_DIR_LIST_INTERVAL
+      value: "30"
+    # How many pods can be created per scheduler loop 
+    - name: AIRFLOW__KUBERNETES__WORKER_PODS_CREATION_BATCH_SIZE
+      value: "4"
+    - name: AIRFLOW__SECRETS__BACKEND
+      value: "airflow.providers.microsoft.azure.secrets.key_vault.AzureKeyVaultBackend"
+    - name: AIRFLOW__SECRETS__BACKEND_KWARGS
+      value: '{"connections_prefix": "airflow-connections", "vault_url": "https://airflowkeyvault1.vault.azure.net/"}'
   # extraEnv: |-
   #   - name: AIRFLOW__CORE__LOAD_EXAMPLES
   #     value: "False"

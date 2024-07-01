@@ -154,7 +154,7 @@ fetch_pageviews = PythonOperator(
 def _write_to_postgres(data_interval_start, ti):
     page_views = ti.xcom_pull(task_ids='fetch_pageviews', key='page_views')
 
-    postgres_hook = PostgresHook(postgres_conn_id="wiki_db")
+    postgres_hook = PostgresHook(postgres_conn_id="wiki-db")
 
     for page_name, view_count in page_views.items():
         postgres_hook.run(
