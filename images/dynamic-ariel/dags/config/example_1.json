@@ -1,0 +1,45 @@
+{
+    "dag_id": "example-1",
+    "artifacts": {
+        "doc1": {
+            "source": "AzureBlob",
+            "params": {
+                "object_path": "path/to/blob"
+            }
+        },
+        "doc2": {
+            "source": "AzureBlob",
+            "params": {
+                "object_path": "path/to/output/blob"
+            }
+        },
+        "doc3": {
+            "source": "AzureBlob",
+            "params": {
+                "object_path": "path/to/output/asi/blob"
+            }
+        }
+    },
+    "stages": {
+        "afr_1": {
+            "capability": "ArielAFR",
+            "input": {
+                "document": "{doc1}",
+                "model_id": "prebuilt-document"
+            },
+            "output": "{doc2}"
+        },
+        "asi_1": {
+            "capability": "ArielASI",
+            "input": {
+                "document": "{doc2}",
+                "recipe_id": "1234-5678"
+            },
+            "output": "{doc3}"
+        }
+    },
+    "schedule": "'@daily'",
+    "chain": [
+        "afr_1 >> asi_1"
+    ]
+}
