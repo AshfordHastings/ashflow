@@ -1,7 +1,7 @@
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 from datetime import datetime, timedelta
-from helpers import {{ capability }}
+from dags.capabilities import AzureBlob, ArielAFR, ArielASI
 
 default_args = {
     'owner': 'airflow',
@@ -21,21 +21,18 @@ dag = DAG(
 )
 
 {% for stage_id, stage in stages.items() %}
-def {{ stage_id }}_task(**kwargs):
-    {{ capabilities['stage.capability'] }}(
-        document=kwargs['params']['document'],
-        {% if 'model_id' in stage.input %}model_id=kwargs['params']['model_id'], {% endif %}
-        {% if 'recipe_id' in stage.input %}recipe_id=kwargs['params']['recipe_id'], {% endif %}
-    )
 
 {{ stage_id }} = PythonOperator(
     task_id='{{ stage_id }}',
-    python_callable={{ stage_id }}_task,
+    python_callable={{ capabilities[stage['capability']] }},
     provide_context=True,
     params={
-        'document': {{ stage.input.document }},
-        {% if 'model_id' in stage.input %}'model_id': {{ stage.input.model_id }}, {% endif %}
-        {% if 'recipe_id' in stage.input %}'recipe_id': {{ stage.input.recipe_id }}, {% endif %}
+        {% for input_id, input_val in stage.input.items() %}
+        "{{ input_id }}": {{ input_val }},
+        {% endfor %}
+        {% for output_id, output_val in stage.output.items() %}
+        "{{ output_id }}": {{ output_val }},
+        {% endfor %}
     },
     dag=dag,
 )

@@ -4,19 +4,19 @@
         "doc1": {
             "source": "AzureBlob",
             "params": {
-                "object_path": "path/to/blob"
+                "blob_path": "path/to/blob"
             }
         },
         "doc2": {
             "source": "AzureBlob",
             "params": {
-                "object_path": "path/to/output/blob"
+                "blob_path": "path/to/output/blob"
             }
         },
         "doc3": {
             "source": "AzureBlob",
             "params": {
-                "object_path": "path/to/output/asi/blob"
+                "blob_path": "path/to/output/asi/blob"
             }
         }
     },
@@ -24,18 +24,38 @@
         "afr_1": {
             "capability": "ArielAFR",
             "input": {
-                "document": "{doc1}",
+                "document": {
+                    "valueFrom": {
+                        "artifactRef": "doc1"
+                    }
+                },   
                 "model_id": "prebuilt-document"
             },
-            "output": "{doc2}"
+            "output": {
+                "output_document": {
+                    "valueFrom": {
+                        "artifactRef": "doc2"
+                    }
+                }
+            }
         },
         "asi_1": {
             "capability": "ArielASI",
             "input": {
-                "document": "{doc2}",
+                "document": {
+                    "valueFrom": {
+                        "artifactRef": "doc2"
+                    }
+                },
                 "recipe_id": "1234-5678"
             },
-            "output": "{doc3}"
+            "output": {
+                "output_document": {
+                    "valueFrom": {
+                        "artifactRef": "doc3"
+                    }
+                }
+            }
         }
     },
     "schedule": "'@daily'",
